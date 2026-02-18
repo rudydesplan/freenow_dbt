@@ -1,0 +1,48 @@
+name: 'freenow_data_product'
+version: '1.0.0'
+config-version: 2
+
+profile: 'default'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Optional but recommended: make docs complete
+models:
+  freenow_data_product:
+    +persist_docs:
+      relation: true
+      columns: true
+
+    # -------------------------
+    # Staging layer
+    # (type casting + validation flags)
+    # -------------------------
+    staging:
+      +materialized: view
+      +schema: staging
+
+    # -------------------------
+    # Silver layer
+    # (curated + quarantine tables)
+    # -------------------------
+    silver:
+      +materialized: table
+      +schema: silver
+
+    # -------------------------
+    # Marts / data products
+    # (drivers_activity, etc.)
+    # -------------------------
+    gold:
+      +materialized: table
+      +schema: gold
