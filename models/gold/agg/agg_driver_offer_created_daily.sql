@@ -32,11 +32,11 @@ select
     sum(is_assigned_from_offer)::bigint as bookings_assigned_from_offers,
     count(distinct booking_id)::bigint as distinct_bookings_offered,
 
-    case
-        when count(distinct booking_id) = 0 then 0
-        else sum(is_assigned_from_offer)::double precision
-             / count(distinct booking_id)
-    end as offer_to_booking_ratio_created_anchor,
+	case
+		when count(distinct booking_id) = 0 then null
+		else sum(is_assigned_from_offer)::double precision
+			 / count(distinct booking_id)
+	end as offer_to_booking_ratio_created_anchor,
 
     current_timestamp as _processed_at
 

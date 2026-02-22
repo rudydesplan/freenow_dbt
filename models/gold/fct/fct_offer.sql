@@ -66,7 +66,7 @@ enriched AS (
       ON v.created_date_ts::date = d.date_day
 
     JOIN state_dim sd
-      ON v.state = sd.offer_state
+      ON UPPER(v.state) = sd.offer_state
 
 )
 

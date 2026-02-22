@@ -49,7 +49,7 @@ enriched AS (
       ON s.request_date_ts::date = d.date_day
 
     JOIN status_dim sd
-      ON s.status = sd.booking_status
+      ON UPPER(s.status) = sd.booking_status
 
 )
 

@@ -34,10 +34,10 @@ select
     count(*)::bigint as offers_sent,
     sum(is_same_day_conversion)::bigint as same_day_conversions,
 
-    case
-        when count(*) = 0 then 0
-        else sum(is_same_day_conversion)::double precision / count(*)
-    end as same_day_conversion_rate,
+	case
+		when count(*) = 0 then null
+		else sum(is_same_day_conversion)::double precision / count(*)
+	end as same_day_conversion_rate,
 
     current_timestamp as _processed_at
 

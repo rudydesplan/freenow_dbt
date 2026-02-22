@@ -87,44 +87,53 @@ final as (
         coalesce(oe.offers_canceled, 0)::bigint as offers_canceled,
         coalesce(oe.distinct_bookings_offered_count, 0)::bigint as distinct_bookings_offered,
 
-        -- Exposure-level rates
-        case when coalesce(oe.offers_sent, 0) = 0 then 0
-             else coalesce(oe.offers_read, 0)::double precision / oe.offers_sent
+        -- ===============================
+        -- Exposure-Level Rates (NULL if no exposure)
+        -- ===============================
+        case
+            when oe.offers_sent is null or oe.offers_sent = 0 then null
+            else oe.offers_read::double precision / oe.offers_sent
         end as read_rate,
 
-        case when coalesce(oe.offers_sent, 0) = 0 then 0
-             else coalesce(oe.offers_accepted, 0)::double precision / oe.offers_sent
+        case
+            when oe.offers_sent is null or oe.offers_sent = 0 then null
+            else oe.offers_accepted::double precision / oe.offers_sent
         end as acceptance_rate,
 
-        case when coalesce(oe.offers_sent, 0) = 0 then 0
-             else coalesce(oe.offers_canceled, 0)::double precision / oe.offers_sent
+        case
+            when oe.offers_sent is null or oe.offers_sent = 0 then null
+            else oe.offers_canceled::double precision / oe.offers_sent
         end as cancel_rate,
 
         -- ===============================
-        -- Decision-Level Rates
+        -- Decision-Level Rates (NULL if no decisions)
         -- ===============================
-        case when (coalesce(oe.offers_accepted,0) + coalesce(oe.offers_canceled,0)) = 0 then 0
-             else coalesce(oe.offers_accepted,0)::double precision
-                  / (coalesce(oe.offers_accepted,0) + coalesce(oe.offers_canceled,0))
+        case
+            when (coalesce(oe.offers_accepted,0) + coalesce(oe.offers_canceled,0)) = 0 then null
+            else oe.offers_accepted::double precision
+                 / (oe.offers_accepted + oe.offers_canceled)
         end as decision_acceptance_rate,
 
-        case when (coalesce(oe.offers_accepted,0) + coalesce(oe.offers_canceled,0)) = 0 then 0
-             else coalesce(oe.offers_canceled,0)::double precision
-                  / (coalesce(oe.offers_accepted,0) + coalesce(oe.offers_canceled,0))
+        case
+            when (coalesce(oe.offers_accepted,0) + coalesce(oe.offers_canceled,0)) = 0 then null
+            else oe.offers_canceled::double precision
+                 / (oe.offers_accepted + oe.offers_canceled)
         end as decision_canceled_rate,
 
         -- ===============================
-        -- Conditional After-Read Rates
+        -- Conditional After-Read Rates (NULL if no reads)
         -- ===============================
-        case when coalesce(oe.offers_read, 0) = 0 then 0
-             else coalesce(oe.offers_accepted,0)::double precision / oe.offers_read
+        case
+            when oe.offers_read is null or oe.offers_read = 0 then null
+            else oe.offers_accepted::double precision / oe.offers_read
         end as accept_after_read_rate,
 
-        case when coalesce(oe.offers_read, 0) = 0 then 0
-             else coalesce(oe.offers_canceled,0)::double precision / oe.offers_read
+        case
+            when oe.offers_read is null or oe.offers_read = 0 then null
+            else oe.offers_canceled::double precision / oe.offers_read
         end as cancel_after_read_rate,
 
-        -- Distance metrics
+        -- Distance metrics (naturally NULL if no rows)
         oe.avg_route_distance_m,
         oe.p50_route_distance_m,
         oe.p75_route_distance_m,
@@ -134,7 +143,7 @@ final as (
         -- Booking Operational (Request-Date)
         -- ===============================
         coalesce(br.bookings_assigned_count, 0)::bigint as bookings_assigned_count_request_anchor,
-        br.sum_estimated_fare_eur                       as sum_estimated_fare_eur_request_anchor,
+        coalesce(br.sum_estimated_fare_eur, 0)          as sum_estimated_fare_eur_request_anchor,
         br.avg_estimated_fare_eur                       as avg_estimated_fare_eur_request_anchor,
 
         -- ===============================
@@ -142,13 +151,13 @@ final as (
         -- ===============================
         coalesce(oc.bookings_assigned_from_offers, 0)::bigint as bookings_assigned_from_offers_created_anchor,
         coalesce(oc.distinct_bookings_offered, 0)::bigint     as distinct_bookings_offered_created_anchor,
-        coalesce(oc.offer_to_booking_ratio_created_anchor, 0) as offer_to_booking_ratio_created_anchor,
+        oc.offer_to_booking_ratio_created_anchor              as offer_to_booking_ratio_created_anchor,
 
         -- ===============================
         -- Same-Day Conversion
         -- ===============================
-        coalesce(sd.same_day_conversions, 0)::bigint           as same_day_conversions,
-        coalesce(sd.same_day_conversion_rate, 0)               as same_day_conversion_rate,
+        coalesce(sd.same_day_conversions, 0)::bigint as same_day_conversions,
+        sd.same_day_conversion_rate                  as same_day_conversion_rate,
 
         current_timestamp as _processed_at
 

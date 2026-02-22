@@ -1,19 +1,17 @@
 {{ config(materialized='table') }}
 
-with states as (
-    select distinct upper(state) as offer_state
-    from {{ ref('offers') }}
-    where state is not null
-),
+WITH source_states AS (
 
-filtered as (
-    -- garde uniquement les 2 attendus si tu veux être strict
-    select offer_state
-    from states
-    where offer_state in ('ACCEPTED', 'CANCELED')
+    SELECT DISTINCT
+        UPPER(state) AS offer_state
+    FROM {{ ref('offers') }}
+    WHERE state IS NOT NULL
+
 )
 
-select
-    row_number() over (order by offer_state)::smallint as offer_state_key,
+SELECT
+    {{ dbt_utils.generate_surrogate_key(['offer_state']) }} 
+        AS offer_state_key,
     offer_state
-from filtered
+FROM source_states
+ORDER BY offer_state
