@@ -1,15 +1,15 @@
 {{ config(materialized='table') }}
 
 SELECT
-    driver_id AS id,
-    NULL AS date_registration,
-    NULL AS driver_rating,
-    NULL AS rating_count,
-    NULL AS receive_marketing,
-    NULL AS country,
+    driver_id            AS id,
+    date_registration_raw AS date_registration,
+    driver_rating_raw     AS driver_rating,
+    rating_count_raw      AS rating_count,
+    receive_marketing_raw AS receive_marketing,
+    country_raw           AS country,
 
     error_code,
-    'Validation failed in staging layer' AS error_detail,
+    error_detail,
 
     _batch_id,
     _source_uri,
@@ -18,5 +18,4 @@ SELECT
     CURRENT_TIMESTAMP AS _quarantined_at
 
 FROM {{ ref('stg_drivers') }}
-
 WHERE error_code IS NOT NULL

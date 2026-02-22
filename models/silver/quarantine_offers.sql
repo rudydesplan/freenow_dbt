@@ -1,14 +1,14 @@
 {{ config(materialized='table') }}
 
 SELECT
-    -- raw payload (as received / normalized strings)
-    offer_id        AS id,
-    datecreated_raw AS datecreated,
-    booking_id      AS bookingid,
-    driver_id       AS driverid,
-    route_distance_raw AS routedistance,
-    state           AS state,
-    driver_read_raw AS driverread,
+    -- raw payload (exactly as received)
+    offer_id               AS id,
+    created_date_raw       AS datecreated,
+    booking_id_raw         AS bookingid,
+    driver_id_raw          AS driverid,
+    route_distance_raw     AS routedistance,
+    state_raw              AS state,
+    driver_read_raw        AS driverread,
 
     -- quarantine metadata
     error_code,

@@ -1,0 +1,349 @@
+version: 2
+
+models:
+
+# ============================================================
+# DIMENSIONS
+# ============================================================
+
+  - name: dim_date
+    description: "Canonical date dimension."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: date_key
+        data_type: integer
+        tests: [not_null, unique]
+
+      - name: date_day
+        data_type: date
+        tests: [not_null, unique]
+
+
+  - name: dim_driver
+    description: "Driver dimension."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: driver_key
+        data_type: varchar
+        tests: [not_null, unique]
+
+      - name: driver_id
+        data_type: varchar
+        tests: [not_null, unique]
+
+      - name: date_registration
+        data_type: date
+        tests: [not_null]
+
+      - name: rating_bucket
+        data_type: varchar
+        tests:
+          - accepted_values:
+              values: ['0-3', '3-4', '4-4.5', '4.5-5']
+
+
+  - name: dim_offer_state
+    description: "Offer state lookup dimension."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: offer_state_key
+        data_type: smallint
+        tests: [not_null, unique]
+
+      - name: offer_state
+        data_type: varchar
+        tests:
+          - not_null
+          - unique
+          - accepted_values:
+              values: ['ACCEPTED', 'CANCELED']
+
+
+  - name: dim_booking_status
+    description: "Booking status lookup dimension."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: booking_status_key
+        data_type: smallint
+        tests: [not_null, unique]
+
+      - name: booking_status
+        data_type: varchar
+        tests: [not_null, unique]
+
+
+# ============================================================
+# FACTS
+# ============================================================
+
+  - name: fct_booking
+    description: "Booking fact table. Grain: one row per booking_id."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: booking_id
+        data_type: varchar
+        tests: [not_null, unique]
+
+      - name: date_key
+        data_type: integer
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+
+      - name: booking_status_key
+        data_type: smallint
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_booking_status')
+              field: booking_status_key
+
+      - name: accepted_driver_id
+        data_type: varchar
+        tests:
+          - relationships:
+              to: ref('dim_driver')
+              field: driver_id
+
+
+  - name: fct_offer
+    description: "Offer fact table. Grain: one row per offer_id."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: offer_id
+        data_type: varchar
+        tests: [not_null, unique]
+
+      - name: booking_id
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fct_booking')
+              field: booking_id
+
+      - name: driver_id
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_driver')
+              field: driver_id
+
+      - name: date_key
+        data_type: integer
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+
+      - name: offer_state_key
+        data_type: smallint
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_offer_state')
+              field: offer_state_key
+
+
+# ============================================================
+# AGGREGATES (NEW CLEAN ONES)
+# ============================================================
+
+  - name: agg_driver_offer_created_daily
+    description: "Offer-based daily conversion metrics per driver."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: driver_id
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_driver')
+              field: driver_id
+
+      - name: date_key
+        data_type: integer
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+
+      - name: offers_sent
+        data_type: bigint
+        tests: [not_null]
+
+      - name: bookings_assigned_from_offers
+        data_type: bigint
+        tests: [not_null]
+
+      - name: distinct_bookings_offered
+        data_type: bigint
+        tests: [not_null]
+
+
+  - name: agg_driver_booking_request_daily
+    description: "Booking-based daily operational metrics per driver."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: driver_id
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_driver')
+              field: driver_id
+
+      - name: date_key
+        data_type: integer
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+
+      - name: bookings_assigned_count
+        data_type: bigint
+        tests: [not_null]
+
+
+  - name: agg_driver_same_day_conversion
+    description: "Same-day offer-to-booking conversion metrics."
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: driver_id
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_driver')
+              field: driver_id
+
+      - name: date_key
+        data_type: integer
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+
+
+# ============================================================
+# FINAL DATA PRODUCT
+# ============================================================
+
+  - name: driver_activity_daily
+    description: "Driver engagement & performance mart. Grain: one row per driver per day."
+    config:
+      contract:
+        enforced: true
+
+    columns:
+      - name: driver_id
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_driver')
+              field: driver_id
+
+      - name: date_key
+        data_type: integer
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+
+      - name: offers_sent
+        data_type: bigint
+        tests: [not_null]
+
+      - name: bookings_assigned_count_request_anchor
+        data_type: bigint
+        tests: [not_null]
+
+      - name: read_rate
+        data_type: double precision
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+
+      - name: acceptance_rate
+        data_type: double precision
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+              
+      - name: cancel_rate
+        data_type: double precision
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1              
+
+      - name: decision_acceptance_rate
+        data_type: double precision
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+
+      - name: decision_canceled_rate
+        data_type: double precision
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+
+      - name: accept_after_read_rate
+        data_type: double precision
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+              
+      - name: cancel_after_read_rate
+        data_type: double precision
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1              
+
+      - name: offer_to_booking_ratio_created_anchor
+        data_type: double precision
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+
+      - name: same_day_conversion_rate
+        data_type: double precision
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1

@@ -1,0 +1,221 @@
+version: 2
+
+models:
+
+  # ============================================================
+  # DRIVERS
+  # ============================================================
+
+  - name: drivers
+    description: "SILVER: standardized drivers (valid rows only)."
+
+    config:
+      contract:
+        enforced: true
+
+    columns:
+      - name: driver_id
+        data_type: varchar
+        tests: [not_null, unique]
+
+      - name: date_registration
+        data_type: date
+        tests: [not_null]
+
+      - name: driver_rating
+        data_type: double precision
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 5
+
+      - name: rating_count
+        data_type: bigint
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+      - name: receive_marketing
+        data_type: boolean
+
+      - name: country
+        data_type: varchar
+
+      - name: _source_batch_id
+        data_type: uuid
+        tests: [not_null]
+
+      - name: _source_uri
+        data_type: varchar
+        tests: [not_null]
+
+      - name: _bronze_ingested_at
+        data_type: timestamptz
+        tests: [not_null]
+
+      - name: _processed_at
+        data_type: timestamptz
+
+      - name: _dbt_invocation_id
+        data_type: varchar
+
+      - name: _openlineage_run_id
+        data_type: varchar
+
+
+  # ============================================================
+  # BOOKINGS
+  # ============================================================
+
+  - name: bookings
+    description: "SILVER: standardized bookings (valid rows only)."
+
+    config:
+      contract:
+        enforced: true
+
+    columns:
+      - name: booking_id
+        data_type: varchar
+        tests: [not_null, unique]
+
+      - name: request_date_ts
+        data_type: timestamptz
+        tests: [not_null]
+
+      - name: status
+        data_type: varchar
+        tests: [not_null]
+
+      - name: accepted_driver_id
+        data_type: varchar
+
+      - name: estimated_route_fare_eur
+        data_type: double precision
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+      - name: _source_batch_id
+        data_type: uuid
+        tests: [not_null]
+
+      - name: _source_uri
+        data_type: varchar
+        tests: [not_null]
+
+      - name: _bronze_ingested_at
+        data_type: timestamptz
+        tests: [not_null]
+
+      - name: _processed_at
+        data_type: timestamptz
+
+      - name: _dbt_invocation_id
+        data_type: varchar
+
+      - name: _openlineage_run_id
+        data_type: varchar
+
+    tests:
+      - relationships:
+          to: ref('drivers')
+          field: accepted_driver_id
+
+
+  # ============================================================
+  # OFFERS
+  # ============================================================
+
+  - name: offers
+    description: "SILVER: standardized offers (valid rows only)."
+
+    config:
+      contract:
+        enforced: true
+
+    columns:
+      - name: offer_id
+        data_type: varchar
+        tests: [not_null, unique]
+
+      - name: created_date_ts
+        data_type: timestamptz
+        tests: [not_null]
+
+      - name: booking_id
+        data_type: varchar
+        tests: [not_null]
+
+      - name: driver_id
+        data_type: varchar
+        tests: [not_null]
+
+      - name: route_distance_m
+        data_type: bigint
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+      - name: state
+        data_type: varchar
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["ACCEPTED", "CANCELED"]
+
+      - name: driver_read
+        data_type: boolean
+
+      - name: _source_batch_id
+        data_type: uuid
+        tests: [not_null]
+
+      - name: _source_uri
+        data_type: varchar
+        tests: [not_null]
+
+      - name: _bronze_ingested_at
+        data_type: timestamptz
+        tests: [not_null]
+
+      - name: _processed_at
+        data_type: timestamptz
+
+      - name: _dbt_invocation_id
+        data_type: varchar
+
+      - name: _openlineage_run_id
+        data_type: varchar
+
+    tests:
+      - relationships:
+          to: ref('drivers')
+          field: driver_id
+      - relationships:
+          to: ref('bookings')
+          field: booking_id
+
+
+  # ============================================================
+  # QUARANTINE TABLES
+  # (Contracts optional — they are usually operational tables)
+  # ============================================================
+
+  - name: quarantine_drivers
+    description: "Invalid driver rows from staging."
+    columns:
+      - name: error_code
+        tests: [not_null]
+
+  - name: quarantine_offers
+    description: "Invalid offer rows from staging."
+    columns:
+      - name: error_code
+        tests: [not_null]
+
+  - name: quarantine_bookings
+    description: "Invalid booking rows from staging."
+    columns:
+      - name: error_code
+        tests: [not_null]

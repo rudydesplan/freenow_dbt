@@ -1,0 +1,92 @@
+version: 2
+
+models:
+  - name: stg_drivers
+    description: "Staging drivers with casting + validation flags (error_code/error_detail)."
+    columns:
+      - name: driver_id
+        tests: [not_null]
+      - name: date_registration
+        description: "Parsed registration date (NULL if unparseable)."
+      - name: driver_rating
+        description: "Parsed rating (NULL if unparseable)."
+      - name: rating_count
+        description: "Parsed rating count (NULL if unparseable)."
+      - name: receive_marketing
+        description: "Parsed boolean (NULL if unparseable)."
+      - name: country
+        description: "Normalized country (post-mapping/standardization if applied)."
+
+      - name: _batch_id
+        tests: [not_null]
+      - name: _source_uri
+        tests: [not_null]
+      - name: _ingested_at
+        tests: [not_null]
+      - name: _row_number
+        tests: [not_null]
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: ["_batch_id", "_source_uri", "_row_number"]
+
+  - name: stg_offers
+    description: "Staging offers with casting + validation flags (error_code/error_detail)."
+    columns:
+      - name: offer_id
+        tests: [not_null]
+      - name: created_date_ts
+        description: "Parsed timestamptz (NULL if unparseable)."
+      - name: booking_id
+        tests: [not_null]
+      - name: driver_id
+        tests: [not_null]
+      - name: route_distance_m
+        description: "Parsed integer meters (NULL if unparseable)."
+      - name: state
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["ACCEPTED", "CANCELED"]
+      - name: driver_read
+        description: "Parsed boolean (NULL if unparseable)."
+
+      - name: _batch_id
+        tests: [not_null]
+      - name: _source_uri
+        tests: [not_null]
+      - name: _ingested_at
+        tests: [not_null]
+      - name: _row_number
+        tests: [not_null]
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: ["_batch_id", "_source_uri", "_row_number"]
+
+  - name: stg_bookings
+    description: "Staging bookings with casting + validation flags (error_code/error_detail)."
+    columns:
+      - name: booking_id
+        tests: [not_null]
+      - name: request_date_ts
+        description: "Parsed timestamptz (NULL if unparseable)."
+      - name: status
+        tests: [not_null]
+      - name: accepted_driver_id
+        description: "Nullable in source depending on status."
+      - name: estimated_route_fare_eur
+        description: "Parsed numeric (NULL if unparseable)."
+
+      - name: _batch_id
+        tests: [not_null]
+      - name: _source_uri
+        tests: [not_null]
+      - name: _ingested_at
+        tests: [not_null]
+      - name: _row_number
+        tests: [not_null]
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: ["_batch_id", "_source_uri", "_row_number"]
