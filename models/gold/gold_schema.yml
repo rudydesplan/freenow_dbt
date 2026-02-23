@@ -231,7 +231,7 @@ models:
               field: date_key
 
       - name: offer_state_key
-        data_type: smallint
+        data_type: varchar
         tests:
           - not_null
           - relationships:
