@@ -70,4 +70,4 @@ select
     '{{ invocation_id }}' as _dbt_invocation_id
 from rank_driver
 where driver_id_count > 1
-  and rn_driver > 1;
+  and rn_driver > 1

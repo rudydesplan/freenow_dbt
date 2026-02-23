@@ -64,4 +64,4 @@ select
     '{{ invocation_id }}' as _dbt_invocation_id,
     null as _openlineage_run_id
 from rank_driver
-where rn_driver = 1;
+where rn_driver = 1
