@@ -275,7 +275,7 @@ models:
 # ============================================================
 
   - name: agg_driver_offer_created_daily
-    description: "Offer-based daily conversion metrics per driver."
+    description: "Offer-based daily conversion metrics per driver (anchor = offer.created_date)."
     config:
       contract:
         enforced: true
@@ -308,6 +308,11 @@ models:
         data_type: bigint
         tests: [not_null]
 
+      - name: offer_to_booking_ratio_created_anchor
+        data_type: double precision
+
+      - name: _processed_at
+        data_type: timestamptz
 
   - name: agg_driver_booking_request_daily
     description: "Booking-based daily operational metrics per driver (anchor = booking.request_date)."
@@ -352,7 +357,7 @@ models:
 
 
   - name: agg_driver_same_day_conversion
-    description: "Same-day offer-to-booking conversion metrics."
+    description: "Same-day offer-to-booking conversion metrics per driver (anchor = offer.created_date)."
     config:
       contract:
         enforced: true
@@ -372,6 +377,20 @@ models:
           - relationships:
               to: ref('dim_date')
               field: date_key
+
+      - name: offers_sent
+        data_type: bigint
+        tests: [not_null]
+
+      - name: same_day_conversions
+        data_type: bigint
+        tests: [not_null]
+
+      - name: same_day_conversion_rate
+        data_type: double precision
+
+      - name: _processed_at
+        data_type: timestamptz
 
 
 # ============================================================
