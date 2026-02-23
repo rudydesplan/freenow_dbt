@@ -26,11 +26,23 @@ typed AS (
         -- TYPED columns (safe casting)
         -- ===============================
 
-        CASE
-            WHEN date_registration ~ '^\d{4}-\d{2}-\d{2}$'
-            THEN CAST(date_registration AS DATE)
-            ELSE NULL
-        END AS date_registration,
+		CASE
+		  WHEN date_registration IS NULL OR LOWER(TRIM(date_registration)) IN ('null','') THEN NULL
+
+		  -- Unix epoch seconds (10 digits)
+		  WHEN TRIM(date_registration) ~ '^\d{10}$'
+			THEN to_timestamp(CAST(TRIM(date_registration) AS BIGINT))::date
+
+		  -- Datetime string: 'YYYY-MM-DD HH:MM:SS(.mmm)'
+		  WHEN TRIM(date_registration) ~ '^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}'
+			THEN CAST(LEFT(TRIM(date_registration), 10) AS DATE)
+
+		  -- Pure date: 'YYYY-MM-DD'
+		  WHEN TRIM(date_registration) ~ '^\d{4}-\d{2}-\d{2}$'
+			THEN CAST(TRIM(date_registration) AS DATE)
+
+		  ELSE NULL
+		END AS date_registration
 
         CASE
             WHEN driver_rating ~ '^\d+(\.\d+)?$'
