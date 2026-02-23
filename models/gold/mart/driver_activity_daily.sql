@@ -159,7 +159,9 @@ final as (
         coalesce(sd.same_day_conversions, 0)::bigint as same_day_conversions,
         sd.same_day_conversion_rate                  as same_day_conversion_rate,
 
-        current_timestamp as _processed_at
+        current_timestamp as _processed_at,
+		'{{ invocation_id }}' as _dbt_invocation_id,
+		NULL::varchar as _openlineage_run_id
 
     from spine s
     join d_driver dd
