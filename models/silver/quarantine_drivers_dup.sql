@@ -17,7 +17,7 @@ with valid as (
       and driver_id is not null
 ),
 
--- Step 1: remove perfect duplicates (keep the latest copy of the identical row)
+-- Step 1: remove perfect duplicates (same rule as silver)
 dedup_full as (
     select *
     from (
@@ -38,14 +38,15 @@ dedup_full as (
     where rn_full = 1
 ),
 
--- Step 2: if driver_id still duplicated, keep latest version
+-- Step 2: detect remaining duplicates by driver_id (these differ in values)
 rank_driver as (
     select
         d.*,
         row_number() over (
             partition by driver_id
             order by _bronze_ingested_at desc, _row_number desc
-        ) as rn_driver
+        ) as rn_driver,
+        count(*) over (partition by driver_id) as driver_id_count
     from dedup_full d
 )
 
@@ -60,8 +61,13 @@ select
     _source_batch_id,
     _source_uri,
     _bronze_ingested_at,
+    _row_number,
+
+    'DUPLICATE_DRIVER_ID_VARIANT' as error_code,
+    'same driver_id appears with different attribute values; kept latest in silver' as error_detail,
+
     current_timestamp as _processed_at,
-    '{{ invocation_id }}' as _dbt_invocation_id,
-    null as _openlineage_run_id
+    '{{ invocation_id }}' as _dbt_invocation_id
 from rank_driver
-where rn_driver = 1;
+where driver_id_count > 1
+  and rn_driver > 1;
