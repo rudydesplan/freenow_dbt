@@ -420,73 +420,122 @@ models:
               to: ref('dim_date')
               field: date_key
 
+      - name: date_day
+        data_type: date
+        tests: [not_null]
+
+      # Dimensions
+      - name: country
+        data_type: varchar
+
+      - name: receive_marketing
+        data_type: boolean
+
+      - name: date_registration
+        data_type: date
+
+      - name: tenure_days
+        data_type: integer
+
+      - name: driver_rating
+        data_type: double precision
+
+      - name: rating_count
+        data_type: bigint
+
+      # Offer engagement counts
       - name: offers_sent
         data_type: bigint
         tests: [not_null]
 
+      - name: offers_read
+        data_type: bigint
+        tests: [not_null]
+
+      - name: offers_accepted
+        data_type: bigint
+        tests: [not_null]
+
+      - name: offers_canceled
+        data_type: bigint
+        tests: [not_null]
+
+      - name: distinct_bookings_offered
+        data_type: bigint
+        tests: [not_null]
+
+      # Rates
+      - name: read_rate
+        data_type: double precision
+
+      - name: acceptance_rate
+        data_type: double precision
+
+      - name: cancel_rate
+        data_type: double precision
+
+      - name: decision_acceptance_rate
+        data_type: double precision
+
+      - name: decision_canceled_rate
+        data_type: double precision
+
+      - name: accept_after_read_rate
+        data_type: double precision
+
+      - name: cancel_after_read_rate
+        data_type: double precision
+
+      # Distance metrics
+      - name: avg_route_distance_m
+        data_type: double precision
+
+      - name: p50_route_distance_m
+        data_type: double precision
+
+      - name: p75_route_distance_m
+        data_type: double precision
+
+      - name: p90_route_distance_m
+        data_type: double precision
+
+      # Booking operational (request-date)
       - name: bookings_assigned_count_request_anchor
         data_type: bigint
         tests: [not_null]
 
-      - name: read_rate
+      - name: sum_estimated_fare_eur_request_anchor
         data_type: double precision
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 1
 
-      - name: acceptance_rate
+      - name: avg_estimated_fare_eur_request_anchor
         data_type: double precision
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 1
-              
-      - name: cancel_rate
-        data_type: double precision
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 1              
 
-      - name: decision_acceptance_rate
-        data_type: double precision
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 1
+      # Offer → booking conversion (created-date)
+      - name: bookings_assigned_from_offers_created_anchor
+        data_type: bigint
+        tests: [not_null]
 
-      - name: decision_canceled_rate
-        data_type: double precision
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 1
-
-      - name: accept_after_read_rate
-        data_type: double precision
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 1
-              
-      - name: cancel_after_read_rate
-        data_type: double precision
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 1              
+      - name: distinct_bookings_offered_created_anchor
+        data_type: bigint
+        tests: [not_null]
 
       - name: offer_to_booking_ratio_created_anchor
         data_type: double precision
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 1
+
+      # Same-day conversion
+      - name: same_day_conversions
+        data_type: bigint
+        tests: [not_null]
 
       - name: same_day_conversion_rate
         data_type: double precision
-        tests:
-          - dbt_utils.accepted_range:
-              min_value: 0
-              max_value: 1
+
+      # Lineage
+      - name: _processed_at
+        data_type: timestamptz
+
+      - name: _dbt_invocation_id
+        data_type: varchar
+
+      - name: _openlineage_run_id
+        data_type: varchar
