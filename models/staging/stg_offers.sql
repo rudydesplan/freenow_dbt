@@ -124,4 +124,5 @@ validated as (
 )
 
 select *
-from validated;
+
+from validated
