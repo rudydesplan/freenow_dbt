@@ -32,7 +32,6 @@ enriched AS (
 			WHEN driver_rating >= 3  AND driver_rating < 4   THEN '3-4'
 			WHEN driver_rating >= 4  AND driver_rating < 4.5 THEN '4-4.5'
 			WHEN driver_rating >= 4.5 AND driver_rating <= 5 THEN '4.5-5'
-			ELSE 'invalid'
 		END AS rating_bucket,
 
         (driver_rating IS NOT NULL) AS is_rated,
