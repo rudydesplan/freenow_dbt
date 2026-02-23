@@ -1,108 +1,127 @@
 {{ config(materialized='view') }}
 
-WITH source AS (
+with source as (
 
-    SELECT *
-    FROM {{ source('bronze', 'raw_offers') }}
+    select *
+    from {{ source('bronze', 'raw_offers') }}
 
 ),
 
-validated AS (
+typed as (
 
-    SELECT
-        id AS offer_id,
+    select
+        id as offer_id,
 
-        -- RAW columns (for quarantine)
-        datecreated   AS created_date_raw,
-        bookingid     AS booking_id_raw,
-        driverid      AS driver_id_raw,
-        routedistance AS route_distance_raw,
-        state         AS state_raw,
-        driverread    AS driver_read_raw,
+        -- RAW columns (for quarantine / observability)
+        datecreated   as created_date_raw,
+        bookingid     as booking_id_raw,
+        driverid      as driver_id_raw,
+        routedistance as route_distance_raw,
+        state         as state_raw,
+        driverread    as driver_read_raw,
 
-        -- TYPED columns (safe casting)
-        CASE
-            WHEN datecreated IS NULL OR LOWER(TRIM(datecreated)) IN ('null', '') THEN NULL
-            ELSE CAST(datecreated AS TIMESTAMPTZ)
-        END AS created_date_ts,
+        -- cleaned helpers
+        nullif(nullif(lower(trim(datecreated)), 'null'), '')     as datecreated_clean,
+        nullif(nullif(lower(trim(bookingid)), 'null'), '')      as bookingid_clean,
+        nullif(nullif(lower(trim(driverid)), 'null'), '')       as driverid_clean,
+        nullif(nullif(lower(trim(routedistance)), 'null'), '')  as routedistance_clean,
+        nullif(nullif(lower(trim(state)), 'null'), '')          as state_clean,
+        nullif(nullif(lower(trim(driverread)), 'null'), '')     as driverread_clean,
 
-        NULLIF(TRIM(bookingid), '') AS booking_id,
-        NULLIF(TRIM(driverid), '')  AS driver_id,
+        -- TYPED columns
+        case
+            when nullif(nullif(lower(trim(datecreated)), 'null'), '') is null then null
+            else cast(datecreated as timestamptz)
+        end as created_date_ts,
 
-        CASE
-            WHEN routedistance ~ '^\d+$'
-            THEN CAST(routedistance AS BIGINT)
-            ELSE NULL
-        END AS route_distance_m,
+        nullif(nullif(trim(bookingid), ''), 'null') as booking_id,
+        nullif(nullif(trim(driverid), ''), 'null')  as driver_id,
 
-        UPPER(TRIM(state)) AS state,
+        case
+            when nullif(nullif(lower(trim(routedistance)), 'null'), '') ~ '^\d+$'
+                then cast(nullif(nullif(lower(trim(routedistance)), 'null'), '') as bigint)
+            else null
+        end as route_distance_m,
 
-        CASE
-            WHEN LOWER(driverread) IN ('true', '1', 'yes')  THEN TRUE
-            WHEN LOWER(driverread) IN ('false', '0', 'no')  THEN FALSE
-            WHEN driverread IS NULL OR LOWER(TRIM(driverread)) IN ('null', '') THEN NULL
-            ELSE NULL
-        END AS driver_read,
+        upper(trim(state)) as state,
+
+        case
+            when driverread_clean in ('true','1','yes') then true
+            when driverread_clean in ('false','0','no') then false
+            else null
+        end as driver_read,
 
         -- Lineage
         _batch_id,
         _source_uri,
         _ingested_at,
-        _row_number,
+        _row_number
+
+    from source
+
+),
+
+validated as (
+
+    select
+        *,
 
         -- Validation rules
-        CASE
-            WHEN id IS NULL OR TRIM(id) = '' OR LOWER(TRIM(id)) = 'null'
-                THEN 'MISSING_OFFER_ID'
+        case
+            when offer_id is null or trim(offer_id) = '' or lower(trim(offer_id)) = 'null'
+                then 'MISSING_OFFER_ID'
 
-            WHEN bookingid IS NULL OR TRIM(bookingid) = '' OR LOWER(TRIM(bookingid)) = 'null'
-                THEN 'MISSING_BOOKING_ID'
+            when bookingid_clean is null
+                then 'MISSING_BOOKING_ID'
 
-            WHEN driverid IS NULL OR TRIM(driverid) = '' OR LOWER(TRIM(driverid)) = 'null'
-                THEN 'MISSING_DRIVER_ID'
+            when driverid_clean is null
+                then 'MISSING_DRIVER_ID'
 
-            WHEN datecreated IS NULL OR LOWER(TRIM(datecreated)) IN ('null', '')
-                THEN 'MISSING_CREATED_DATE'
+            when datecreated_clean is null
+                then 'MISSING_CREATED_DATE'
 
-            WHEN routedistance IS NOT NULL AND NOT (routedistance ~ '^\d+$')
-                THEN 'INVALID_ROUTE_DISTANCE'
+            when routedistance_clean is not null
+                 and not (routedistance_clean ~ '^\d+$')
+                then 'INVALID_ROUTE_DISTANCE'
 
-            WHEN state IS NULL OR TRIM(state) = '' OR LOWER(TRIM(state)) = 'null'
-                THEN 'MISSING_STATE'
+            when state_clean is null
+                then 'MISSING_STATE'
 
-            WHEN UPPER(TRIM(state)) NOT IN ('ACCEPTED', 'CANCELED')
-                THEN 'INVALID_STATE'
+            when upper(trim(state)) not in ('ACCEPTED', 'CANCELED')
+                then 'INVALID_STATE'
 
-            ELSE NULL
-        END AS error_code,
+            else null
+        end as error_code,
 
-        CASE
-            WHEN id IS NULL OR TRIM(id) = '' OR LOWER(TRIM(id)) = 'null'
-                THEN 'offer id is NULL/blank'
+        case
+            when offer_id is null or trim(offer_id) = '' or lower(trim(offer_id)) = 'null'
+                then 'offer id is NULL/blank'
 
-            WHEN bookingid IS NULL OR TRIM(bookingid) = '' OR LOWER(TRIM(bookingid)) = 'null'
-                THEN 'bookingid is NULL/blank'
+            when bookingid_clean is null
+                then 'bookingid is NULL/blank'
 
-            WHEN driverid IS NULL OR TRIM(driverid) = '' OR LOWER(TRIM(driverid)) = 'null'
-                THEN 'driverid is NULL/blank'
+            when driverid_clean is null
+                then 'driverid is NULL/blank'
 
-            WHEN datecreated IS NULL OR LOWER(TRIM(datecreated)) IN ('null', '')
-                THEN 'datecreated is NULL/blank'
+            when datecreated_clean is null
+                then 'datecreated is NULL/blank'
 
-            WHEN routedistance IS NOT NULL AND NOT (routedistance ~ '^\d+$')
-                THEN 'route distance not numeric'
+            when routedistance_clean is not null
+                 and not (routedistance_clean ~ '^\d+$')
+                then 'route distance not numeric'
 
-            WHEN state IS NULL OR TRIM(state) = '' OR LOWER(TRIM(state)) = 'null'
-                THEN 'state is NULL/blank'
+            when state_clean is null
+                then 'state is NULL/blank'
 
-            WHEN UPPER(TRIM(state)) NOT IN ('ACCEPTED', 'CANCELED')
-                THEN 'state not in ACCEPTED|CANCELED'
+            when upper(trim(state)) not in ('ACCEPTED', 'CANCELED')
+                then 'state not in ACCEPTED|CANCELED'
 
-            ELSE NULL
-        END AS error_detail
+            else null
+        end as error_detail
 
-    FROM source
+    from typed
+
 )
 
-SELECT *
-FROM validated
+select *
+from validated;

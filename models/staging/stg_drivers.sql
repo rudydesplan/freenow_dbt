@@ -42,7 +42,7 @@ typed AS (
 			THEN CAST(TRIM(date_registration) AS DATE)
 
 		  ELSE NULL
-		END AS date_registration
+		END AS date_registration,
 
         CASE
             WHEN driver_rating ~ '^\d+(\.\d+)?$'

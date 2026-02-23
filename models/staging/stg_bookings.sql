@@ -48,9 +48,11 @@ validated AS (
             WHEN id IS NULL THEN 'MISSING_BOOKING_ID'
             WHEN request_date IS NULL THEN 'MISSING_REQUEST_DATE'
             WHEN status IS NULL THEN 'MISSING_STATUS'
-            WHEN estimated_route_fare IS NOT NULL 
-                 AND NOT (estimated_route_fare ~ '^\d+(\.\d+)?$')
-                THEN 'INVALID_ESTIMATED_FARE'
+			
+			WHEN NULLIF(NULLIF(LOWER(TRIM(estimated_route_fare)), 'null'), '') IS NOT NULL
+			 AND NOT (NULLIF(NULLIF(LOWER(TRIM(estimated_route_fare)), 'null'), '') ~ '^\d+(\.\d+)?$')
+			THEN 'INVALID_ESTIMATED_FARE'
+				
             ELSE NULL
         END AS error_code,
 
