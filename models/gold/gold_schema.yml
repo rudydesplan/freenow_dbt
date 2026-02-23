@@ -53,7 +53,7 @@ models:
         enforced: true
     columns:
       - name: offer_state_key
-        data_type: smallint
+        data_type: varchar
         tests: [not_null, unique]
 
       - name: offer_state
@@ -72,7 +72,7 @@ models:
         enforced: true
     columns:
       - name: booking_status_key
-        data_type: smallint
+        data_type: varchar
         tests: [not_null, unique]
 
       - name: booking_status

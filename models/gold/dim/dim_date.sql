@@ -1,31 +1,48 @@
 {{ config(materialized='table') }}
 
-with date_spine as (
+WITH date_spine AS (
 
-    select
-        date_day,
-        extract(year from date_day)*10000
-        + extract(month from date_day)*100
-        + extract(day from date_day) as date_key,
+    SELECT
+        -- Force DATE type
+        date_day::date AS date_day,
 
-        extract(dow from date_day) as day_of_week,
-        trim(to_char(date_day, 'Day'))   as day_name,
-        case when extract(dow from date_day) in (0,6) then true else false end as is_weekend,
+        -- Force INTEGER type
+        (
+            (extract(year  from date_day)::int * 10000) +
+            (extract(month from date_day)::int * 100) +
+            (extract(day   from date_day)::int)
+        )::int AS date_key,
 
-        extract(week from date_day) as week_of_year,
-        date_trunc('week', date_day)::date as week_start_date,
+        -- Force SMALLINT types
+        extract(dow from date_day)::smallint AS day_of_week,
 
-        extract(month from date_day) as month,
-        trim(to_char(date_day, 'Month')) as month_name,
-        extract(quarter from date_day) as quarter,
-        extract(year from date_day) as year
+        trim(to_char(date_day, 'Day'))::varchar AS day_name,
 
-    from generate_series(
+        CASE
+            WHEN extract(dow from date_day) IN (0,6)
+            THEN true
+            ELSE false
+        END AS is_weekend,
+
+        extract(week from date_day)::smallint AS week_of_year,
+
+        date_trunc('week', date_day)::date AS week_start_date,
+
+        extract(month from date_day)::smallint AS month,
+
+        trim(to_char(date_day, 'Month'))::varchar AS month_name,
+
+        extract(quarter from date_day)::smallint AS quarter,
+
+        extract(year from date_day)::smallint AS year
+
+    FROM generate_series(
         '2021-06-01'::date,
         '2021-06-30'::date,
         interval '1 day'
-    ) as date_day
+    ) AS date_day
 
 )
 
-select * from date_spine
+SELECT *
+FROM date_spine

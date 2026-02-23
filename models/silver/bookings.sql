@@ -1,5 +1,26 @@
 {{ config(materialized='table') }}
 
+WITH valid_bookings AS (
+
+    SELECT *
+    FROM {{ ref('stg_bookings') }}
+    WHERE error_code IS NULL
+      AND booking_id IS NOT NULL
+
+),
+
+deduplicated AS (
+
+    SELECT
+        *,
+        ROW_NUMBER() OVER (
+            PARTITION BY booking_id
+            ORDER BY _ingested_at DESC
+        ) AS rn
+    FROM valid_bookings
+
+)
+
 SELECT
     booking_id,
     request_date_ts,
@@ -14,7 +35,5 @@ SELECT
     '{{ invocation_id }}' AS _dbt_invocation_id,
     NULL AS _openlineage_run_id
 
-FROM {{ ref('stg_bookings') }}
-
-WHERE error_code IS NULL
-  AND booking_id IS NOT NULL
+FROM deduplicated
+WHERE rn = 1

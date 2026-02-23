@@ -89,6 +89,10 @@ models:
 
       - name: accepted_driver_id
         data_type: varchar
+        tests:
+          - relationships:
+              to: ref('drivers')
+              field: driver_id
 
       - name: estimated_route_fare_eur
         data_type: double precision
@@ -117,11 +121,6 @@ models:
       - name: _openlineage_run_id
         data_type: varchar
 
-    tests:
-      - relationships:
-          to: ref('drivers')
-          field: accepted_driver_id
-
 
   # ============================================================
   # OFFERS
@@ -145,11 +144,19 @@ models:
 
       - name: booking_id
         data_type: varchar
-        tests: [not_null]
+        tests:
+          - not_null
+          - relationships:
+              to: ref('bookings')
+              field: booking_id
 
       - name: driver_id
         data_type: varchar
-        tests: [not_null]
+        tests:
+          - not_null
+          - relationships:
+              to: ref('drivers')
+              field: driver_id
 
       - name: route_distance_m
         data_type: bigint
@@ -188,18 +195,9 @@ models:
       - name: _openlineage_run_id
         data_type: varchar
 
-    tests:
-      - relationships:
-          to: ref('drivers')
-          field: driver_id
-      - relationships:
-          to: ref('bookings')
-          field: booking_id
-
 
   # ============================================================
   # QUARANTINE TABLES
-  # (Contracts optional — they are usually operational tables)
   # ============================================================
 
   - name: quarantine_drivers
