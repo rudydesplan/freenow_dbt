@@ -222,6 +222,10 @@ models:
               to: ref('dim_driver')
               field: driver_id
 
+      - name: created_date_ts
+        data_type: timestamptz
+        tests: [not_null]
+
       - name: date_key
         data_type: integer
         tests:
@@ -230,6 +234,9 @@ models:
               to: ref('dim_date')
               field: date_key
 
+      - name: route_distance_m
+        data_type: bigint
+
       - name: offer_state_key
         data_type: varchar
         tests:
@@ -237,6 +244,30 @@ models:
           - relationships:
               to: ref('dim_offer_state')
               field: offer_state_key
+
+      - name: driver_read
+        data_type: boolean
+
+      - name: is_accepted
+        data_type: boolean
+        tests: [not_null]
+
+      - name: is_canceled
+        data_type: boolean
+        tests: [not_null]
+
+      - name: is_read
+        data_type: boolean
+        tests: [not_null]
+
+      - name: _processed_at
+        data_type: timestamptz
+
+      - name: _dbt_invocation_id
+        data_type: varchar
+
+      - name: _openlineage_run_id
+        data_type: varchar
 
 
 # ============================================================
@@ -279,7 +310,7 @@ models:
 
 
   - name: agg_driver_booking_request_daily
-    description: "Booking-based daily operational metrics per driver."
+    description: "Booking-based daily operational metrics per driver (anchor = booking.request_date)."
     config:
       contract:
         enforced: true
@@ -303,6 +334,21 @@ models:
       - name: bookings_assigned_count
         data_type: bigint
         tests: [not_null]
+
+      - name: sum_estimated_fare_eur
+        data_type: double precision
+
+      - name: avg_estimated_fare_eur
+        data_type: double precision
+
+      - name: _processed_at
+        data_type: timestamptz
+
+      - name: _dbt_invocation_id
+        data_type: varchar
+
+      - name: _openlineage_run_id
+        data_type: varchar
 
 
   - name: agg_driver_same_day_conversion
