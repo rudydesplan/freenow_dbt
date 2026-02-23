@@ -93,6 +93,7 @@ models:
           - relationships:
               to: ref('drivers')
               field: driver_id
+              where: "accepted_driver_id is not null"
 
       - name: estimated_route_fare_eur
         data_type: double precision

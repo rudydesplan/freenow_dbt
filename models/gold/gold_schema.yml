@@ -11,6 +11,7 @@ models:
     config:
       contract:
         enforced: true
+
     columns:
       - name: date_key
         data_type: integer
@@ -19,6 +20,41 @@ models:
       - name: date_day
         data_type: date
         tests: [not_null, unique]
+
+      - name: day_of_week
+        data_type: smallint
+        tests: [not_null]
+
+      - name: day_name
+        data_type: varchar
+        tests: [not_null]
+
+      - name: is_weekend
+        data_type: boolean
+        tests: [not_null]
+
+      - name: week_of_year
+        data_type: smallint
+        tests: [not_null]
+
+      - name: week_start_date
+        data_type: date
+
+      - name: month
+        data_type: smallint
+        tests: [not_null]
+
+      - name: month_name
+        data_type: varchar
+        tests: [not_null]
+
+      - name: quarter
+        data_type: smallint
+        tests: [not_null]
+
+      - name: year
+        data_type: smallint
+        tests: [not_null]
 
 
   - name: dim_driver
